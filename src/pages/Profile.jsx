@@ -153,10 +153,43 @@ function ChangeEmailForm({ user, onClose }) {
   );
 }
 
+import { UserAPI } from "../services/api";
+
 function ChangePasswordForm({ onClose }) {
   const [pw, setPw] = useState({ current: "", newPass: "", confirm: "" });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (!pw.current || !pw.newPass || !pw.confirm) {
+      setError("All fields are required.");
+      return;
+    }
+    if (pw.newPass !== pw.confirm) {
+      setError("New password and confirm password do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await UserAPI.changePassword({ currentPassword: pw.current, newPassword: pw.newPass });
+      setSuccess("Password updated successfully.");
+      setPw({ current: "", newPass: "", confirm: "" });
+      setTimeout(onClose, 1500);
+    } catch (e) {
+      setError(e?.response?.data?.message || e.message || "Failed to change password.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <form className="space-y-4">
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      {error && <div className="text-rose-600 text-sm">{error}</div>}
+      {success && <div className="text-green-600 text-sm">{success}</div>}
       <div>
         <label className="block text-sm font-medium">Current Password</label>
         <input
@@ -184,8 +217,8 @@ function ChangePasswordForm({ onClose }) {
           onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
         />
       </div>
-      <Button type="button" onClick={onClose} className="w-full">
-        Update Password
+      <Button type="submit" disabled={loading} className="w-full">
+        {loading ? "Updating..." : "Update Password"}
       </Button>
     </form>
   );

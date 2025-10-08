@@ -54,6 +54,8 @@ export const AgenciesAPI = {
 export const UsersAPI = {
   list: () => api.get("/api/users").then((r) => r.data || []),
   create: (payload) => api.post("/api/users", payload).then((r) => r.data),
+  update: (id, payload) => api.put(`/api/users/${id}`, payload).then((r) => r.data),
+  remove: (id) => api.delete(`/api/users/${id}`).then((r) => r.data),
 };
 
 // ---- Reports
@@ -75,6 +77,11 @@ export const ReportsAPI = {
 }
 
 };
+  
+export const UserAPI = {
+  changePassword: (data) => api.post("api/users/:id/change-password", data).then(r => r.data),
+};
+
 
 
 
