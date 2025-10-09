@@ -78,9 +78,24 @@ export const ReportsAPI = {
 
 };
   
+// export const UserAPI = {
+//   changePassword: (_id, data) => api.post(`api/users/change-password`, data).then(r => r.data),
+  
+
+// };
+
 export const UserAPI = {
-  changePassword: (data) => api.post("api/users/:id/change-password", data).then(r => r.data),
+  // For self password change
+  changePassword: (data) => api.post('api/users/change-password', data).then(r => r.data),
+
+  // For admin changing another user's password
+  changeUserPassword: (_id, data) => api.post(`api/users/${_id}/change-password`, data).then(r => r.data),
 };
+
+// { change the authenticated user's password }
+
+
+
 
 
 

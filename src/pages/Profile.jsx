@@ -185,6 +185,8 @@ function ChangePasswordForm({ onClose }) {
       setLoading(false);
     }
   };
+ console.log("Loading state:", loading);
+   
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
