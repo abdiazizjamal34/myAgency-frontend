@@ -113,6 +113,9 @@ import { RecordsAPI } from "../services/api";
 import DateRangePicker from "../components/ui/DateRangePicker";
 import RecordsTable from "../components/RecordsTable";
 import RecordFormDialog from "../components/RecordFormDialog";
+ import { exportToPDF } from "../utils/pdfExport";
+import { FileText } from "lucide-react";
+import Button from "../components/ui/Button";
 
 export default function Records() {
   const [records, setRecords] = useState([]);
@@ -142,6 +145,29 @@ export default function Records() {
           onOpenChange={(open) => { if (!open) setEditing(null); }} // clear editing on close
         />
       </div>
+     
+
+
+<Button
+  onClick={() =>
+    exportToPDF(
+      "Records Report",
+      ["Customer", "Service", "Selling", "Buying", "Commission", "Date"],
+      records.map((r) => [
+        r.customerName,
+        r.typeOfService,
+        r.sellingPrice,
+        r.buyingPrice,
+        r.commission,
+        new Date(r.createdAt).toLocaleDateString(),
+      ])
+    )
+  }
+  className="flex items-center gap-2"
+>
+  <FileText className="w-4 h-4" /> PDF
+</Button>
+
 
       <RecordsTable
         records={records}

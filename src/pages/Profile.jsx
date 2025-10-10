@@ -5,6 +5,7 @@ import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import { Mail, Shield, Edit3, Bell } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -160,6 +161,9 @@ function ChangePasswordForm({ onClose }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false); // NEW
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -178,7 +182,7 @@ function ChangePasswordForm({ onClose }) {
       await UserAPI.changePassword({ currentPassword: pw.current, newPassword: pw.newPass });
       setSuccess("Password updated successfully.");
       setPw({ current: "", newPass: "", confirm: "" });
-      setTimeout(onClose, 1500);
+      setTimeout(() => setShowLogoutModal(true), 1200); // Show modal after success
     } catch (e) {
       setError(e?.response?.data?.message || e.message || "Failed to change password.");
     } finally {
@@ -187,9 +191,78 @@ function ChangePasswordForm({ onClose }) {
   };
  console.log("Loading state:", loading);
    
+const handleLogoutAll = () => {
+    logout(); // Clear token and user state
+    navigate("/login");
+  };
+
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <>
+
+    {/* // ...inside ChangePasswordForm return... */}
+<form className="space-y-4" onSubmit={handleSubmit}>
+  {error && <div className="text-rose-600 text-sm">{error}</div>}
+  {success && <div className="text-green-600 text-sm">{success}</div>}
+  {loading && (
+    <div className="flex flex-col items-center justify-center py-4">
+      {/* SVG spinner */}
+      <svg className="animate-spin h-8 w-8 text-indigo-600 mb-2" viewBox="0 0 24 24">
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="none"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      <span className="text-indigo-600 text-sm font-medium">
+        🔒 Updating password... Please wait!
+      </span>
+    </div>
+  )}
+  <div>
+    <label className="block text-sm font-medium">Current Password</label>
+    <input
+      type="password"
+      className="w-full border rounded-md p-2 mt-1"
+      value={pw.current}
+      onChange={(e) => setPw({ ...pw, current: e.target.value })}
+      disabled={loading}
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-medium">New Password</label>
+    <input
+      type="password"
+      className="w-full border rounded-md p-2 mt-1"
+      value={pw.newPass}
+      onChange={(e) => setPw({ ...pw, newPass: e.target.value })}
+      disabled={loading}
+    />
+  </div>
+  <div>
+    <label className="block text-sm font-medium">Confirm Password</label>
+    <input
+      type="password"
+      className="w-full border rounded-md p-2 mt-1"
+      value={pw.confirm}
+      onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
+      disabled={loading}
+    />
+  </div>
+  <Button type="submit" disabled={loading} className="w-full">
+    {loading ? "Updating..." : "Update Password"}
+  </Button>
+</form>
+    {/* <form className="space-y-4" onSubmit={handleSubmit}>
       {error && <div className="text-rose-600 text-sm">{error}</div>}
       {success && <div className="text-green-600 text-sm">{success}</div>}
       <div>
@@ -222,6 +295,26 @@ function ChangePasswordForm({ onClose }) {
       <Button type="submit" disabled={loading} className="w-full">
         {loading ? "Updating..." : "Update Password"}
       </Button>
-    </form>
+    </form> */}
+    {/* Logout confirmation modal */}
+      {showLogoutModal && (
+        <Modal open={true} onClose={() => { setShowLogoutModal(false); onClose(); }} title="Logout from all devices?">
+          <div className="space-y-4">
+            <p>
+              Your password has been changed.<br />
+              Do you want to log out from every device (expire all sessions)?
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={handleLogoutAll} className="w-full bg-indigo-600 text-white">
+                Yes, log out everywhere
+              </Button>
+              <Button onClick={() => { setShowLogoutModal(false); onClose(); }} variant="secondary" className="w-full">
+                No, stay logged in
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }

@@ -38,27 +38,70 @@ export default function Dashboard() {
     }
   }, [recentRecords, selectedUser]);
 
-     useEffect(() => {
-  if (user.role === "AGENCY_ADMIN") {
-    UsersAPI.list({ agencyId: user.agency._id || user.agency })
-      .then(setAgencyUsers)
-      .catch((err) => console.error("Failed to load users", err));
+//      useEffect(() => {
+//   if (user.role === "AGENCY_ADMIN") {
+//     UsersAPI.list({ agencyId: user.agency._id || user.agency })
+//       .then(setAgencyUsers)
+//       .catch((err) => console.error("Failed to load users", err));
 
-  } else if (user.role === "SUPER_ADMIN") {
-    UsersAPI.list()
-      .then(setAgencyUsers)
-      .catch((err) => console.error("Failed to load users", err));
+//   } else if (user.role === "SUPER_ADMIN") {
+//     UsersAPI.list()
+//       .then(setAgencyUsers)
+//       .catch((err) => console.error("Failed to load users", err));
 
-  }
-
-
-}, [user]);
+//   }
 
 
+// }, [user]);
 
- useEffect(() => {
+
+
+//  useEffect(() => {
+//   (async () => {
+//     const filter = {};
+//     if (selectedUser !== "all") {
+//       filter.createdBy = selectedUser;
+//     }
+
+//     // By Service (with filter)
+//     const bs = await ReportsAPI.byService({ ...filter, range: "7d" });
+//     setByService(bs);
+
+//     // Trend (with filter)
+//     const trend = await ReportsAPI.trend({ ...filter, group: "day", range: "7d" });
+
+//     // Summary
+//     const s = await ReportsAPI.summary(filter);
+//     setSummary(s);
+
+//     // Recent Records
+//     const recs = await RecordsAPI.list(filter);
+//     setRecentRecords(recs);
+
+//     // Fill last 7 days
+//     const today = dayjs();
+//     const days = Array.from({ length: 7 }).map((_, i) =>
+//       today.subtract(6 - i, "day").format("YYYY-MM-DD")
+//     );
+//     const lookup = {};
+//     trend.forEach((t) => {
+//       lookup[t.period] = Number(t.profit) || 0;
+//     });
+//     const filled = days.map((d) => ({
+//       period: d,
+//       profit: lookup[d] ?? 0,
+//     }));
+//     setTrendData(filled);
+//   })();
+// }, [selectedUser]);
+  
+useEffect(() => {
   (async () => {
     const filter = {};
+    // Filter by agency for agency users
+    if (user.role === "AGENCY_ADMIN" || user.role === "AGENCY_USER") {
+      filter.agency = user.agency._id || user.agency;
+    }
     if (selectedUser !== "all") {
       filter.createdBy = selectedUser;
     }
@@ -93,22 +136,35 @@ export default function Dashboard() {
     }));
     setTrendData(filled);
   })();
-}, [selectedUser]);
-  
+}, [selectedUser, user]);
 
-  if (!summary)
-    return (
-      <>
-
-         <>
-  {new Date().getHours() < 12 ? "Good Morning" : "Good Afternoon"}!  :  {user?.name ? user.name || user.name : "MyAgency"}
-</>
-        <div>Loading Dashboard...</div>
-
-      
-
-      </>
-    );
+if (!summary)
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[300px]">
+      <div className="text-lg font-semibold mb-2">
+        {new Date().getHours() < 12 ? "🌅 Good Morning" : "🌇 Good Afternoon"} {user?.name ? user.name : "MyAgency"}
+      </div>
+      <svg className="animate-spin h-10 w-10 text-indigo-600 mb-3" viewBox="0 0 24 24">
+        <circle
+          className="opacity-25"
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="4"
+          fill="none"
+        />
+        <path
+          className="opacity-75"
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+        />
+      </svg>
+      <span className="text-indigo-600 text-lg font-semibold">
+        🚀 Loading your dashboard, please wait...
+      </span>
+    </div>
+  ); 
  
   // Create a lookup map for userId → name
 const userMap = {};

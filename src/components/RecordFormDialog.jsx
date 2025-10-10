@@ -2,19 +2,8 @@ import React, { useEffect, useState } from "react";
 import Button from "./ui/Button";
 import Modal from "./ui/Modal";
 import RecordForm from "./RecordForm";
-import { Plus } from "lucide-react";
+import { Plus, CheckCircle2, XCircle } from "lucide-react";
 
-/**
- * Usage:
- * <RecordFormDialog
- *   triggerLabel="Add Record"
- *   editing={editing}                  // pass the record to edit (or null)
- *   onSaved={() => refresh()}          // called after successful save
- *   onOpenChange={(open) => {          // optional: keep parent in sync
- *     if (!open) setEditing(null);
- *   }}
- * />
- */
 export default function RecordFormDialog({
   triggerLabel = "Add Record",
   editing = null,
@@ -23,8 +12,9 @@ export default function RecordFormDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState(editing);
+  const [status, setStatus] = useState(""); // "success" | "error" | ""
+  const [message, setMessage] = useState("");
 
-  // If parent sets an editing record, open the dialog automatically
   useEffect(() => {
     setCurrent(editing || null);
     if (editing) setOpen(true);
@@ -32,25 +22,44 @@ export default function RecordFormDialog({
 
   const close = () => {
     setOpen(false);
+    setStatus("");
+    setMessage("");
     onOpenChange?.(false);
   };
 
-  const afterSave = () => {
-    onSaved?.();
-    close();
+  const afterSave = (result) => {
+    if (result?.success) {
+      setStatus("success");
+      setMessage("Record added successfully!");
+      onSaved?.();
+      setTimeout(close, 1500); // Auto-close after feedback
+    } else if (result?.error) {
+      setStatus("error");
+      setMessage(result.error);
+    }
   };
 
   return (
     <>
-      {/* Trigger button (for creating a new record) */}
       <Button onClick={() => { setCurrent(null); setOpen(true); onOpenChange?.(true); }} className="flex items-center gap-2">
         <Plus className="w-4 h-4" />
         {triggerLabel}
       </Button>
 
-      {/* Dialog with the form */}
-      <Modal open={open} onClose={close} title={current ? "Edit Record" : "Add Record" } size="xl">
-        {/* RecordForm is already responsive; in a modal it renders as a single-column layout */}
+      <Modal open={open} onClose={close} title={current ? "Edit Record" : "Add Record"} size="xl">
+        {status === "success" && (
+          <div className="flex items-center gap-2 text-green-600 mb-4">
+            <CheckCircle2 className="w-6 h-6" />
+            <span>{message}</span>
+          </div>
+        )}
+        {status === "error" && (
+          <div className="flex items-center gap-2 text-rose-600 mb-4">
+            <XCircle className="w-6 h-6" />
+            <span>{message}</span>
+          </div>
+        )}
+        {/* Pass afterSave to RecordForm */}
         <RecordForm editing={current} afterSave={afterSave} />
       </Modal>
     </>

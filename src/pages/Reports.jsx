@@ -6,8 +6,10 @@ import KpiCard from "../components/dashboard/KpiCard";
 import MiniBar from "../components/dashboard/MiniBar";
 import { currency } from "../utils/currency";
 import { ReportsAPI } from "../services/api";
-import { Download } from "lucide-react";
 import DateRangePicker from "../components/ui/DateRangePicker";
+import { Download, FileText } from "lucide-react";
+import { exportToPDF } from "../utils/pdfExport";
+
 
 export default function Reports() {
   const [summary, setSummary] = useState(null);
@@ -49,6 +51,34 @@ export default function Reports() {
       <div className="mb-4">
         <DateRangePicker onChange={setRange} />
       </div>
+
+      {/* 🔹 PDF Export Button */}
+      <div className="flex justify-between items-center mb-4">
+  <h2 className="text-lg font-semibold">Commission by Service</h2>
+  <div className="flex gap-2">
+    <Button onClick={() => exportToCSV(byService)} className="flex items-center gap-2">
+      <Download className="w-4 h-4" /> CSV
+    </Button>
+    <Button
+      onClick={() =>
+        exportToPDF(
+          "Report by Service",
+          ["Service", "Total Selling", "Total Buying", "Commission", "Profit"],
+          byService.map((s) => [
+            s._id || s.typeOfService,
+            s.totalSelling || 0,
+            s.totalBuying || 0,
+            s.totalCommission || 0,
+            s.totalProfit || 0,
+          ])
+        )
+      }
+      className="flex items-center gap-2"
+    >
+      <FileText className="w-4 h-4" /> PDF
+    </Button>
+  </div>
+</div>
 
       {/* 🔹 KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
