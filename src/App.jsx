@@ -13,14 +13,23 @@ import Users from "./pages/Users";
 import Login from "./pages/Login";
 import { ThemeProvider } from "./hooks/useTheme";
 import Profile from "./pages/Profile";
-
+import ForgotPassword from "./pages/ForgotPassword";
 function AppShell() {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  if (!user)  return <Login />;
-   
-  
+  // If user is not authenticated, still allow public routes like
+  // /forgot-password. Default to the Login page for other paths.
+  if (!user) {
+    return (
+      <ToastProvider>
+        <Routes>
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="*" element={<Login />} />
+        </Routes>
+      </ToastProvider>
+    );
+  }
 
   return (
     <ToastProvider>
@@ -38,6 +47,7 @@ function AppShell() {
               <Route path="/records" element={<Records />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
               {user.role === "SUPER_ADMIN" && (
                 <Route path="/agencies" element={<Agencies />} />
               )}

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
 import Button from "../components/ui/Button";
 import { Mail, Lock } from "lucide-react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate, Link } from "react-router-dom"; // Import useNavigate and Link
 
 export default function Login() {
   const { login } = useAuth();
@@ -112,6 +112,13 @@ export default function Login() {
               {loading ? "Signing In..." : "Sign In"} {/* Change button text based on loading state */}
             </Button>
           </form>
+
+            <p className="text-sm text-center mt-3">
+              <Link to="/forgot-password" className="text-indigo-600 hover:underline">
+                Forgot Password?
+              </Link>
+            </p>
+
 
           <div className="text-center text-xs text-slate-400 mt-6">
             © {new Date().getFullYear()} Finance App. All rights reserved.

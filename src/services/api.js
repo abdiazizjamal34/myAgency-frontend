@@ -94,6 +94,11 @@ export const UserAPI = {
 
 // { change the authenticated user's password }
 
+export const PasswordAPI = {
+  requestOtp: (phone) => api.post("/api/auth/forgot-password", { phone }).then(r => r.data),
+  verifyOtp: (data) => api.post("/api/auth/verify-otp", data).then(r => r.data),
+  changePassword: (data) => api.post("/api/auth/reset-password", data).then(r => r.data),
+};
 
 
 

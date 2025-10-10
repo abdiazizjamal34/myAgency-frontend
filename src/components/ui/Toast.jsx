@@ -34,8 +34,11 @@ export function ToastProvider({ children }) {
     };
   }, [toasts, removeToast]);
 
+  // Keep both `push` and `showToast` in the context for backward compatibility
+  const showToast = push;
+
   return (
-    <ToastCtx.Provider value={{ push }}>
+    <ToastCtx.Provider value={{ push, showToast }}>
       {children}
       <div
         className="fixed top-4 right-4 space-y-2 z-50 max-w-md"
