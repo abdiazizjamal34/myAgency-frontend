@@ -128,7 +128,7 @@ export default function VerifyEmail() {
         </form>
 
         <div className="text-center mt-4">
-            <h6>Didn't receive the email? Check your spam folder or </h6>
+            <h6>Didn't receive the email? Check your spam folder or</h6>
           <Button
             type="button"
             variant="secondary"
