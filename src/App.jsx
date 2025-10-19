@@ -14,6 +14,10 @@ import Login from "./pages/Login";
 import { ThemeProvider } from "./hooks/useTheme";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
+import VerifyEmail from "./pages/VerifyEmail";
+import ResetPassword from "./pages/ResetPassword";
+import NotFound from "./pages/NotFound"; // create if missing
+
 function AppShell() {
   const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -24,7 +28,9 @@ function AppShell() {
     return (
       <ToastProvider>
         <Routes>
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </ToastProvider>
@@ -54,7 +60,9 @@ function AppShell() {
               {["SUPER_ADMIN", "AGENCY_ADMIN"].includes(user.role) && (
                 <Route path="/users" element={<Users />} />
               )}
-              <Route path="*" element={<h1>404 - Page not found</h1>} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
         </div>

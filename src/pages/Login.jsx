@@ -30,8 +30,16 @@ export default function Login() {
         navigate("/dashboard"); // Redirect to dashboard
       }, delay);
     } catch (err) {
-      setLoading(false); // Also set loading to false in case of error
-      setError("Invalid email or password");
+      if (err.response?.status === 403) {
+        // showToast may not be defined in this file; guard the call
+        if (typeof showToast === "function") {
+          showToast("Please verify your email before logging in", "warning");
+        }
+        navigate("/verify-email");
+      } else {
+        setLoading(false); // Also set loading to false in case of error
+        setError("Invalid email or password");
+      }
     }
   };
 

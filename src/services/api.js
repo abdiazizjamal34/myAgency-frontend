@@ -29,6 +29,10 @@ api.interceptors.response.use(
 // ---- Auth
 export const AuthAPI = {
   login: (email, password) => api.post("/api/auth/login", { email, password }),
+  verifyEmail: (data) => api.post("/api/auth/verify-email", data).then((r) => r.data),
+  requestOtp: (data) => api.post("/api/auth/forgot-password", data).then((r) => r.data),
+  verifyOtp: (data) => api.post("/api/auth/verify-otp", data).then((r) => r.data),
+  resetPassword: (data) => api.post("/api/auth/reset-password", data).then((r) => r.data),
 };
 
 // ---- Records
@@ -99,6 +103,7 @@ export const PasswordAPI = {
   verifyOtp: (data) => api.post("/api/auth/verify-otp", data).then(r => r.data),
   changePassword: (data) => api.post("/api/auth/reset-password", data).then(r => r.data),
 };
+
 
 
 

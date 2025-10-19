@@ -6,7 +6,9 @@ import { ReportsAPI, RecordsAPI } from "../services/api";
 import { currency } from "../utils/currency";
 import Card from "../components/ui/Card";
 import { useAuth } from "../hooks/useAuth";   
-import { UsersAPI } from "../services/api";
+import { UsersAPI } from "../services/api"; 
+import { AlertTriangle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 import {
   LineChart,
@@ -27,8 +29,30 @@ export default function Dashboard() {
   const [agencyUsers, setAgencyUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState("all");
 
+    
 
    const { user, logout } = useAuth();
+
+  // fetch agency users for the selector
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const all = await UsersAPI.list(); // fetch all users (backend may accept query params)
+        if (user.role === "SUPER_ADMIN") {
+          setAgencyUsers(all);
+        } else {
+          const myAgencyId = user.agency?._id || user.agency;
+          const filtered = all.filter(
+            (u) => (u.agency?._id || u.agency) === myAgencyId
+          );
+          setAgencyUsers(filtered);
+        }
+      } catch (err) {
+        console.error("Failed to load users", err);
+      }
+    })();
+  }, [user]);
 
      const filteredRecords = useMemo(() => {
     if (selectedUser === "all") {
@@ -184,6 +208,24 @@ agencyUsers.forEach((u) => {
       </div>
 
       <div className="space-y-6 p-2 md:p-6">
+         {/* 🚨 Email Verification Banner */}
+      {!user?.emailVerified && (
+        <div className="bg-amber-50 border border-amber-300 text-amber-800 p-4 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="text-amber-500 w-6 h-6" />
+            <span>
+              Your email is not verified yet. Some features may be restricted.
+            </span>
+          </div>
+          <a
+            href="/verify-email"
+            className="text-sm font-medium text-amber-700 underline hover:text-amber-900"
+          >
+            Verify Now
+          </a>
+        </div>
+      )}
+
         {/* KPI Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Income" value={currency(summary.totalIncome)} />
