@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { AuthAPI } from "../services/api";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
@@ -13,14 +13,14 @@ export default function VerifyEmail() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [cooldown, setCooldown] = useState(START_SECONDS); // visible immediately
-  const [success, setSuccess] = useState(false);
+  const [cooldown, setCooldown] = useState(START_SECONDS);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [result, setResult] = useState(null); // { ok: true|false, message, details }
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout } = useAuth(); // <- added
+  const { logout } = useAuth();
 
-  // countdown timer
   useEffect(() => {
     if (cooldown > 0) {
       const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
@@ -28,7 +28,7 @@ export default function VerifyEmail() {
     }
   }, [cooldown]);
 
-  // auto-verify when link contains ?email=...&token=...
+  // auto-verify when link is clicked: /verify-email?email=...&token=...
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const token = params.get("token") || params.get("code");
@@ -38,48 +38,63 @@ export default function VerifyEmail() {
       setCode(token);
       (async () => {
         setLoading(true);
+        setDialogOpen(true);
         try {
-          await AuthAPI.verifyEmail({ email: emailParam, code: token });
-          toast.push("Email verified", "success");
-          // logout current session then redirect to login
+          const res = await AuthAPI.verifyEmail({ email: emailParam, code: token });
+          // expect backend to return data; include agency info if provided
+          setResult({
+            ok: true,
+            message: res?.message || "Email successfully verified.",
+            details: res?.agency || null,
+          });
+          // force logout (as requested) then redirect to login
           try { await logout(); } catch (e) { /* ignore logout errors */ }
-          navigate("/login", { replace: true });
+          setTimeout(() => navigate("/login", { replace: true }), 2000);
         } catch (err) {
-          toast.push(err?.response?.data?.message || err.message || "Invalid or expired code", "error");
+          setResult({
+            ok: false,
+            message: err?.response?.data?.message || "Verification failed or token expired.",
+            details: null,
+          });
         } finally {
           setLoading(false);
         }
       })();
     }
-  }, [location.search]);
+  }, [location.search, logout, navigate]);
 
   const handleVerify = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setDialogOpen(true);
     try {
-      await AuthAPI.verifyEmail({ email, code });
-      toast.push("Email verified", "success");
-      // logout current session then redirect to login
-      try { await logout(); } catch (e) { /* ignore logout errors */ }
-      navigate("/login", { replace: true });
+      const res = await AuthAPI.verifyEmail({ email, code });
+      setResult({
+        ok: true,
+        message: res?.message || "Email verified successfully.",
+        details: res?.agency || null,
+      });
+      try { await logout(); } catch (e) {}
+      setTimeout(() => navigate("/login", { replace: true }), 2000);
     } catch (err) {
-      toast.push(err?.response?.data?.message || err.message || "Invalid or expired code", "error");
+      setResult({
+        ok: false,
+        message: err?.response?.data?.message || "Invalid or expired code.",
+        details: null,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
-    if (!email) {
-      toast.push("Please enter your email first", "error");
-      return;
-    }
+    if (!email) return toast.push("Enter your email first", "error");
     try {
       await AuthAPI.requestOtp({ identifier: email, method: "email" });
       toast.push("OTP resent", "success");
       setCooldown(START_SECONDS);
     } catch (err) {
-      toast.push(err?.response?.data?.message || err.message || "Failed to resend OTP", "error");
+      toast.push(err?.response?.data?.message || "Failed to resend OTP", "error");
     }
   };
 
@@ -101,7 +116,7 @@ export default function VerifyEmail() {
         </div>
 
         <p className="text-center text-sm text-slate-500 mb-6">
-          Enter the email and the 6-digit code sent to your inbox.
+          Enter the email and the 6-digit code sent to your inbox. After verification you will be logged out and must sign in again.
         </p>
 
         <form onSubmit={handleVerify} className="space-y-4">
@@ -128,7 +143,6 @@ export default function VerifyEmail() {
         </form>
 
         <div className="text-center mt-4">
-            <h6>Didn't receive the email? Check your spam folder or</h6>
           <Button
             type="button"
             variant="secondary"
@@ -141,11 +155,45 @@ export default function VerifyEmail() {
         </div>
       </Card>
 
-      <Modal open={success} title="">
+      <Modal open={dialogOpen} onClose={() => setDialogOpen(false)} title="">
         <div className="flex flex-col items-center justify-center p-6 space-y-4 text-center">
-          <CheckCircle size={60} className="text-green-500 animate-bounce" />
-          <h2 className="text-2xl font-semibold">Email Verified!</h2>
-          <p className="text-slate-500">Redirecting to login...</p>
+          {loading && <div className="flex flex-col items-center"><svg className="h-10 w-10 animate-spin text-indigo-500" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg><div className="mt-2">Processing...</div></div>}
+
+          {!loading && result?.ok && (
+            <>
+              <CheckCircle size={56} className="text-green-500" />
+              <div className="font-semibold text-lg">Verification successful</div>
+              <div className="text-sm text-slate-600">
+                {result.message}
+              </div>
+
+              {result.details && (
+                <div className="mt-2 text-left w-full bg-slate-50 p-3 rounded text-sm">
+                  <div className="font-medium">Agency details</div>
+                  <div>Name: {result.details.name || "—"}</div>
+                  {result.details.contact && <div>Contact: {result.details.contact}</div>}
+                  {result.details.address && <div>Address: {result.details.address}</div>}
+                </div>
+              )}
+
+              <div className="mt-3 text-left w-full text-sm">
+                <div className="font-medium">Important:</div>
+                <ul className="list-disc ml-5">
+                  <li>You have been logged out for security. Please sign in again.</li>
+                  <li>On first login, immediately change your password from your profile.</li>
+                  <li>Do not share your credentials. Contact your agency admin for access issues.</li>
+                </ul>
+              </div>
+            </>
+          )}
+
+          {!loading && result && !result.ok && (
+            <>
+              <svg className="h-14 w-14 text-rose-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              <div className="font-semibold text-lg">Verification failed</div>
+              <div className="text-sm text-slate-600">{result.message}</div>
+            </>
+          )}
         </div>
       </Modal>
     </div>
