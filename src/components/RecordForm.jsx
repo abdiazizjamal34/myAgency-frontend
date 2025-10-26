@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from "react";
-import { DollarSign, Briefcase, User, Coins, ReceiptText, CheckCircle2, XCircle } from "lucide-react";
+import { DollarSign, Briefcase, User, Coins, ReceiptText, CheckCircle2, XCircle, } from "lucide-react";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 import Card from "./ui/Card";
@@ -11,7 +11,7 @@ import { useAuth } from "../hooks/useAuth";
 export default function RecordForm({ editing, afterSave }) {
   const { user } = useAuth();
   const [form, setForm] = useState({
-    customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: ""
+    customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "", subService: "", fromTo: ""
   });
 
   const [saving, setSaving] = useState(false);
@@ -28,9 +28,11 @@ export default function RecordForm({ editing, afterSave }) {
         buyPrice: editing.buyPrice ?? "",
         expenses: editing.expenses ?? "",
         ticketNumber: editing.ticketNumber ?? "",
+        subService: editing.subService ?? "",
+        fromTo: editing.fromTo ?? "",
       });
     } else {
-      setForm({ customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "" });
+      setForm({ customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "", subService: "", fromTo: "" , notes: ""});
     }
     setStatus("");
     setMessage("");
@@ -53,9 +55,12 @@ export default function RecordForm({ editing, afterSave }) {
       typeOfService: form.serviceType?.trim(),
       sellingPrice: Number(form.sellPrice || 0),
       buyingPrice: Number(form.buyPrice || 0),
+      notes: form.notes?.trim(),
       expenses: Number(form.expenses || 0),
       agency: user.agency,
-      ...(form.serviceType === "Ticket" && { ticketNumber: form.ticketNumber?.trim() })
+      ...(form.serviceType === "Ticket" && { ticketNumber: form.ticketNumber?.trim() }),
+      ...(form.serviceType === "Consulting" && { subService: form.subService?.trim() }),
+      
     };
 
     try {
@@ -139,22 +144,82 @@ export default function RecordForm({ editing, afterSave }) {
                 <option value="">Select service type</option>
                 <option value="Ticket">Ticket</option>
                 <option value="Consulting">Consulting</option>
-                <option value="Visa">Visa</option>
+                <option value="Visa">Other</option>
               </select>
             </div>
+
+             {form.serviceType === "Consulting" && (
+              <div className="flex items-center">
+                <Briefcase className="mr-2 opacity-0" /> {/* keep alignment */}
+                <select
+                  name="subService"
+                  value={form.subService}
+                  onChange={handle}
+                  required
+                  className="w-full border rounded px-3 py-2"
+                >
+                  <option value="">Select consulting subtype</option>
+                  <option value="Visa">Visa</option>
+                  <option value="Appointment">Appointment</option>
+                  <option value="Forum">Forum</option>
+                </select>
+              </div>
+            )}
+
             {form.serviceType === "Ticket" && (
-              <Input
-                icon={ReceiptText}
-                name="ticketNumber"
-                placeholder="Ticket number"
-                value={form.ticketNumber}
-                onChange={handle}
-                required
-              />
+              <>
+                <Input
+                  icon={ReceiptText}
+                  name="ticketNumber"
+                  placeholder="Ticket number"
+                  value={form.ticketNumber}
+                  onChange={handle}
+                  required
+                />
+                <Input
+                  icon={ReceiptText}
+                  name="fromTo"
+                  placeholder="From / To"
+                  value={form.fromTo}
+                  onChange={handle}
+                  required
+                />
+              </>
             )}
             <Input icon={DollarSign} type="number" step="0.01" name="sellPrice" placeholder="Selling price" value={form.sellPrice} onChange={handle} required />
             <Input icon={DollarSign} type="number" step="0.01" name="buyPrice" placeholder="Buying price" value={form.buyPrice} onChange={handle} required />
             <Input icon={ReceiptText} type="number" step="0.01" name="expenses" placeholder="Expenses" value={form.expenses} onChange={handle} />
+            {/* <Input icon={DollarSign} type="textArea" name="notes" placeholder="Additional notes" value={form.notes} onChange={handle} className="md:col-span-2" />   */}
+            {/* <Input icon={ReceiptText} type="textArea" name="notes" placeholder="Additional notes" value={form.notes} onChange={handle} className="md:col-span-2" /> */}
+            <div className="md:col-span-2">
+              <label htmlFor="notes" className="sr-only">Additional notes</label>
+              <textarea
+                id="notes"
+                name="notes"
+                placeholder="Additional notes"
+                value={form.notes || ""}  
+                onChange={handle}
+                className="w-full border rounded px-3 py-2 min-h-[96px] resize-vertical"
+            />
+           </div>
+            
+            <div className="flex items-center">
+              <Briefcase className="mr-2" />
+              <select
+                name="paymentMethod"
+                value={form.paymentMethod}
+                onChange={handle}
+                required
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="">Select payment method</option>
+                <option value="Cash"> in Cash</option>
+                <option value="Ebirr">Ebirr</option>
+                <option value="CBE">CBE</option>
+
+              </select>
+            </div>
+
             <div className="md:col-span-3 flex items-center gap-3">
               <div className="text-sm text-slate-700 flex items-center gap-2">
                 <Coins className="w-4 h-4 text-amber-500" />

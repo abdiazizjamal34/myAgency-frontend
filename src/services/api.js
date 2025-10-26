@@ -39,6 +39,7 @@ export const AuthAPI = {
 export const RecordsAPI = {
   list: (params = {}) =>
     api.get("/api/records", { params }).then((r) => r.data || []),
+   get: (id) => api.get(`/api/records/${id}`).then(r => r.data),
   create: (payload) => api.post("/api/records", payload).then((r) => r.data),
   update: (id, payload) => api.put(`/api/records/${id}`, payload).then((r) => r.data),
   remove: (id) => api.delete(`/api/records/${id}`).then((r) => r.data),

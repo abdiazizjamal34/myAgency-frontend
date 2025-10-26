@@ -17,6 +17,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound"; // create if missing
+import RecordDetails from "./pages/RecordDetails";
 
 function AppShell() {
   const { user } = useAuth();
@@ -51,6 +52,7 @@ function AppShell() {
               <Route path="/" element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/records" element={<Records />} />
+               <Route path="/records/:id" element={<RecordDetails />} />  
               <Route path="/reports" element={<Reports />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
