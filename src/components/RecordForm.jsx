@@ -60,7 +60,7 @@ export default function RecordForm({ editing, afterSave }) {
       agency: user.agency,
       ...(form.serviceType === "Ticket" && { ticketNumber: form.ticketNumber?.trim() }),
       ...(form.serviceType === "Consulting" && { subService: form.subService?.trim() }),
-      
+
     };
 
     try {
@@ -161,7 +161,7 @@ export default function RecordForm({ editing, afterSave }) {
                   <option value="">Select consulting subtype</option>
                   <option value="Visa">Visa</option>
                   <option value="Appointment">Appointment</option>
-                  <option value="Forum">Forum</option>
+                  <option value="Forum">Form</option>
                 </select>
               </div>
             )}
