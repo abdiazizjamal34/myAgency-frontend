@@ -82,11 +82,19 @@ export default function RecordsTable({ records, onEdit, onDelete, loading }) {
                     </td>
                     <td className="p-3">
                       <div className="flex items-center gap-2 justify-end">
+                          {/* <Button
+  variant="outline"
+  onClick={() => navigate(`/invoice/${r._id}`)}
+>
+  🧾 Invoice
+</Button> */}
                        <Button
   variant="outline"
   className="px-3 py-1"
   onClick={() => navigate(`/records/${r._id}`)}
+
 >
+
   <Eye className="w-4 h-4" />
 </Button>
                         <Button

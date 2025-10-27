@@ -11,7 +11,7 @@ import { useAuth } from "../hooks/useAuth";
 export default function RecordForm({ editing, afterSave }) {
   const { user } = useAuth();
   const [form, setForm] = useState({
-    customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "", subService: "", fromTo: ""
+    customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "", subService: "", fromTo: "" , notes: "" , paymentMethod: "", 
   });
 
   const [saving, setSaving] = useState(false);
@@ -28,11 +28,12 @@ export default function RecordForm({ editing, afterSave }) {
         buyPrice: editing.buyPrice ?? "",
         expenses: editing.expenses ?? "",
         ticketNumber: editing.ticketNumber ?? "",
+        paymentMethod: editing.paymentMethod ?? "",
         subService: editing.subService ?? "",
         fromTo: editing.fromTo ?? "",
       });
     } else {
-      setForm({ customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "", subService: "", fromTo: "" , notes: ""});
+      setForm({ customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "", subService: "", fromTo: "" , notes: "" , paymentMethod: "",  });
     }
     setStatus("");
     setMessage("");
@@ -56,6 +57,8 @@ export default function RecordForm({ editing, afterSave }) {
       sellingPrice: Number(form.sellPrice || 0),
       buyingPrice: Number(form.buyPrice || 0),
       notes: form.notes?.trim(),
+      paymentMethod: form.paymentMethod?.trim(),
+      fromTo: form.fromTo?.trim(),
       expenses: Number(form.expenses || 0),
       agency: user.agency,
       ...(form.serviceType === "Ticket" && { ticketNumber: form.ticketNumber?.trim() }),
@@ -144,7 +147,7 @@ export default function RecordForm({ editing, afterSave }) {
                 <option value="">Select service type</option>
                 <option value="Ticket">Ticket</option>
                 <option value="Consulting">Consulting</option>
-                <option value="Visa">Other</option>
+                <option value="Other">Other</option>
               </select>
             </div>
 

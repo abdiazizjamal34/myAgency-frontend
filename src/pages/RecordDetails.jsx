@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { RecordsAPI } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
-import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { currency } from "../utils/currency";
 
@@ -13,7 +12,6 @@ export default function RecordDetails() {
   const [record, setRecord] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch the record
   useEffect(() => {
     (async () => {
       try {
@@ -35,29 +33,33 @@ export default function RecordDetails() {
     Number(record.buyingPrice || 0) -
     Number(record.expenses || 0);
 
-  // ✅ Load agency info dynamically
   const agencyName = user?.agency?.name || "My Agency";
   const agencyLogo = user?.agency?.logo || "/logo.png";
   const agencyRole = user?.role || "User";
 
   return (
     <div className="p-4 space-y-6 dark:text-slate-100 print:p-0">
-      {/* Toolbar (hidden when printing) */}
-      <div className="flex justify-between items-center mb-4 print:hidden">
+      {/* Toolbar */}
+      <div className="flex flex-wrap gap-2 justify-between items-center mb-4 print:hidden">
         <Button variant="outline" onClick={() => navigate(-1)}>
           ← Back to Records
         </Button>
-        <Button variant="primary" onClick={() => window.print()}>
-          🖨️ Print Record
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="primary" onClick={() => window.print()}>
+            🖨️ Print Record
+          </Button>
+          <Button variant="outline" onClick={() => navigate(`/invoice/${id}`)}>
+            🧾 Invoice
+          </Button>
+        </div>
       </div>
 
-      {/* Printable Report */}
+      {/* Record Card */}
       <div
         className="bg-white dark:bg-slate-800 rounded-xl shadow p-8 print:shadow-none print:bg-white print:dark:bg-white"
         style={{ maxWidth: "800px", margin: "auto" }}
       >
-        {/* Header with Agency Branding */}
+        {/* Header */}
         <div className="flex justify-between items-center border-b pb-4 mb-6 print:border-black/20">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-900">
@@ -77,6 +79,18 @@ export default function RecordDetails() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <Detail label="Customer" value={record.customerName} />
           <Detail label="Service Type" value={record.typeOfService} />
+          <Detail label="Sub-Service" value={record.subService} />
+          <Detail label="From / To" value={record.fromTo} />
+          <Detail label="Ticket Number" value={record.ticketNumber} />
+          <Detail label="Payment Method" value={record.paymentMethod} />
+          <Detail
+            label="Consultants"
+            value={
+              record.consultants?.length
+                ? record.consultants.join(", ")
+                : "—"
+            }
+          />
           <Detail label="Selling Price" value={currency(record.sellingPrice)} />
           <Detail label="Buying Price" value={currency(record.buyingPrice)} />
           <Detail label="Expenses" value={currency(record.expenses)} />
@@ -87,18 +101,29 @@ export default function RecordDetails() {
             label="Created At"
             value={new Date(record.createdAt).toLocaleString()}
           />
+          <Detail label="Last Updated" value={new Date(record.updatedAt).toLocaleString()} />
         </div>
+
+        {/* Notes */}
+        {record.notes && (
+          <div className="mt-6">
+            <h3 className="font-semibold text-slate-700 mb-1">Notes:</h3>
+            <p className="text-slate-600 text-sm bg-slate-50 p-3 rounded-lg border border-slate-200 dark:bg-slate-700 dark:text-slate-200">
+              {record.notes}
+            </p>
+          </div>
+        )}
 
         {/* Signature Section */}
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-10 text-center print:mt-20">
           <SignatureBlock
-            label={agencyRole === "AGENCY_ADMIN" ? "Agency Admin Signature" : "Accountant Signature"}
+            label={
+              agencyRole === "AGENCY_ADMIN"
+                ? "Agency Admin Signature"
+                : "Accountant Signature"
+            }
             name={user?.name || "Authorized User"}
           />
-          {/* <SignatureBlock
-            label="Customer Signature"
-            name={record.customerName || "__________________"}
-          /> */}
         </div>
 
         {/* Footer */}
@@ -113,12 +138,13 @@ export default function RecordDetails() {
   );
 }
 
+/* 🔹 Reusable UI Blocks */
 function Detail({ label, value }) {
   return (
     <div className="flex flex-col border-b border-slate-200 dark:border-slate-700 pb-2 print:border-black/20">
       <span className="text-xs text-slate-500">{label}</span>
       <span className="font-medium text-slate-800 dark:text-slate-900">
-        {value ?? "—"}
+        {value && value !== "" ? value : "—"}
       </span>
     </div>
   );
