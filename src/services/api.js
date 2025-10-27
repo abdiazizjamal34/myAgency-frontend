@@ -1,5 +1,11 @@
-
 import axios from "axios";
+
+import NProgress from "nprogress";
+import "nprogress/nprogress.css";
+
+
+
+
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE || "",
@@ -106,7 +112,48 @@ export const PasswordAPI = {
 };
 
 
+NProgress.configure({
+  showSpinner: false,
+  speed: 400,
+  minimum: 0.2,
+});
 
+let activeRequests = 0;
+
+function startProgress() {
+  if (activeRequests === 0) NProgress.start();
+  activeRequests++;
+}
+
+function stopProgress() {
+  activeRequests--;
+  if (activeRequests <= 0) {
+    NProgress.done();
+    activeRequests = 0;
+  }
+}
+
+api.interceptors.request.use(
+  (config) => {
+    startProgress();
+    return config;
+  },
+  (error) => {
+    stopProgress();
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    stopProgress();
+    return response;
+  },
+  (error) => {
+    stopProgress();
+    return Promise.reject(error);
+  }
+);
 
 
 
