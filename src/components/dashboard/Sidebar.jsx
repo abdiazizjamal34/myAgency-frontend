@@ -12,7 +12,10 @@ export default function Sidebar({ open, onClose }) {
     { to: "/records", label: "Records", Icon: Table, roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "PARTNER", "ACCOUNTANT"] },
     { to: "/reports", label: "Reports", Icon: FileBarChart2, roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "PARTNER", "ACCOUNTANT"] },
     { to: "/agencies", label: "Agencies", Icon: Building2, roles: ["SUPER_ADMIN"] },
+    { to: "/payment-summary", label: "Accounts", Icon: FileBarChart2, roles: ["SUPER_ADMIN", "AGENCY_ADMIN", "ACCOUNTANT"] },
     { to: "/users", label: "Users", Icon: Users, roles: ["SUPER_ADMIN", "AGENCY_ADMIN"] },
+    { to: "/profile", label: "Profile", Icon: Users },
+
   ];
 
   return (

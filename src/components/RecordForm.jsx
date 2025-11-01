@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { DollarSign, Briefcase, User, Coins, ReceiptText, CheckCircle2, XCircle, } from "lucide-react";
+import { useMemo, useState, useEffect } from "react";
+import { DollarSign, Briefcase, User, Coins, ReceiptText, CheckCircle2, XCircle } from "lucide-react";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 import Card from "./ui/Card";
@@ -11,7 +11,17 @@ import { useAuth } from "../hooks/useAuth";
 export default function RecordForm({ editing, afterSave }) {
   const { user } = useAuth();
   const [form, setForm] = useState({
-    customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "", subService: "", fromTo: "" , notes: "" , paymentMethod: "", 
+    customerName: "",
+    serviceType: "",
+    sellPrice: "",
+    buyPrice: "",
+    expenses: "",
+    ticketNumber: "",
+    subService: "",
+    fromTo: "",
+    notes: "",
+    paymentMethod: "",
+    consultants: [],
   });
 
   const [saving, setSaving] = useState(false);
@@ -19,51 +29,73 @@ export default function RecordForm({ editing, afterSave }) {
   const [message, setMessage] = useState("");
   const toast = useToast();
 
+  // populate form when editing record is provided
   useEffect(() => {
     if (editing) {
       setForm({
-        customerName: editing.customerName || "",
-        serviceType: editing.serviceType || "",
-        sellPrice: editing.sellPrice ?? "",
-        buyPrice: editing.buyPrice ?? "",
+        customerName: editing.customerName ?? "",
+        // normalize to option values (lowercase) so the select shows the existing value
+        serviceType: (editing.typeOfService ?? editing.serviceType ?? "").toString().toLowerCase(),
+        sellPrice: editing.sellingPrice ?? editing.sellPrice ?? "",
+        buyPrice: editing.buyingPrice ?? editing.buyPrice ?? "",
         expenses: editing.expenses ?? "",
         ticketNumber: editing.ticketNumber ?? "",
-        paymentMethod: editing.paymentMethod ?? "",
         subService: editing.subService ?? "",
         fromTo: editing.fromTo ?? "",
+        notes: editing.notes ?? "",
+        paymentMethod: editing.paymentMethod ?? "",
+        consultants: editing.consultants ?? [],
       });
     } else {
-      setForm({ customerName: "", serviceType: "", sellPrice: "", buyPrice: "", expenses: "", ticketNumber: "", subService: "", fromTo: "" , notes: "" , paymentMethod: "",  });
+      setForm({
+        customerName: "",
+        serviceType: "",
+        sellPrice: "",
+        buyPrice: "",
+        expenses: "",
+        ticketNumber: "",
+        subService: "",
+        fromTo: "",
+        notes: "",
+        paymentMethod: "",
+        consultants: [],
+      });
     }
     setStatus("");
     setMessage("");
   }, [editing]);
 
   const commission = useMemo(
-    () => (Number(form.sellPrice || 0) - Number(form.buyPrice || 0)),
-    [form.sellPrice, form.buyPrice]
+    () => Number(form.sellPrice || 0) - Number(form.buyPrice || 0) - Number(form.expenses || 0),
+    [form.sellPrice, form.buyPrice, form.expenses]
   );
 
-  const handle = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  const handle = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  };
 
   const submit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setStatus("");
     setMessage("");
+
+    // Build payload with all record fields so update preserves unchanged fields
     const payload = {
       customerName: form.customerName?.trim(),
       typeOfService: form.serviceType?.trim(),
       sellingPrice: Number(form.sellPrice || 0),
       buyingPrice: Number(form.buyPrice || 0),
-      notes: form.notes?.trim(),
-      paymentMethod: form.paymentMethod?.trim(),
-      fromTo: form.fromTo?.trim(),
       expenses: Number(form.expenses || 0),
+      ticketNumber: form.ticketNumber?.trim() || "",
+      subService: form.subService?.trim() || "",
+      fromTo: form.fromTo?.trim() || "",
+      notes: form.notes?.trim() || "",
+      paymentMethod: form.paymentMethod?.trim() || "",
+      consultants: Array.isArray(form.consultants) ? form.consultants : (form.consultants ? [form.consultants] : []),
+      commission: commission,
       agency: user.agency,
-      ...(form.serviceType === "Ticket" && { ticketNumber: form.ticketNumber?.trim() }),
-      ...(form.serviceType === "Consulting" && { subService: form.subService?.trim() }),
-
     };
 
     try {
@@ -80,9 +112,9 @@ export default function RecordForm({ editing, afterSave }) {
         toast.push("Record added");
         afterSave?.({ success: true });
       }
-    } catch (e) {
+    } catch (err) {
       setStatus("error");
-      setMessage(e?.response?.data?.message || e.message || "Failed to save");
+      setMessage(err?.response?.data?.message || err.message || "Failed to save");
       toast.push("Failed to save", "error");
       afterSave?.({ error: message });
     } finally {
@@ -145,13 +177,14 @@ export default function RecordForm({ editing, afterSave }) {
                 className="w-full border rounded px-3 py-2"
               >
                 <option value="">Select service type</option>
-                <option value="Ticket">Ticket</option>
-                <option value="Consulting">Consulting</option>
-                <option value="Other">Other</option>
+                <option value="ticket">Ticket</option>
+                <option value="consulting">Consulting</option>
+                <option value="hotel">Hotel</option>
+                <option value="other">Other</option>
               </select>
             </div>
 
-             {form.serviceType === "Consulting" && (
+             {form.serviceType === "consulting" && (
               <div className="flex items-center">
                 <Briefcase className="mr-2 opacity-0" /> {/* keep alignment */}
                 <select
@@ -164,12 +197,12 @@ export default function RecordForm({ editing, afterSave }) {
                   <option value="">Select consulting subtype</option>
                   <option value="Visa">Visa</option>
                   <option value="Appointment">Appointment</option>
-                  <option value="Forum">Form</option>
+                  <option value="Forum">Forum</option>
                 </select>
               </div>
             )}
 
-            {form.serviceType === "Ticket" && (
+            {form.serviceType === "ticket" && (
               <>
                 <Input
                   icon={ReceiptText}
@@ -192,8 +225,6 @@ export default function RecordForm({ editing, afterSave }) {
             <Input icon={DollarSign} type="number" step="0.01" name="sellPrice" placeholder="Selling price" value={form.sellPrice} onChange={handle} required />
             <Input icon={DollarSign} type="number" step="0.01" name="buyPrice" placeholder="Buying price" value={form.buyPrice} onChange={handle} required />
             <Input icon={ReceiptText} type="number" step="0.01" name="expenses" placeholder="Expenses" value={form.expenses} onChange={handle} />
-            {/* <Input icon={DollarSign} type="textArea" name="notes" placeholder="Additional notes" value={form.notes} onChange={handle} className="md:col-span-2" />   */}
-            {/* <Input icon={ReceiptText} type="textArea" name="notes" placeholder="Additional notes" value={form.notes} onChange={handle} className="md:col-span-2" /> */}
             <div className="md:col-span-2">
               <label htmlFor="notes" className="sr-only">Additional notes</label>
               <textarea
@@ -216,12 +247,19 @@ export default function RecordForm({ editing, afterSave }) {
                 className="w-full border rounded px-3 py-2"
               >
                 <option value="">Select payment method</option>
-                <option value="Cash"> in Cash</option>
+                <option value="Loan">Loan</option>
+                <option value="Cash">Cash</option>
                 <option value="Ebirr">Ebirr</option>
                 <option value="CBE">CBE</option>
-
+                <option value="Awash">Awash</option >
+                <option value="Telebirr">Telebirr</option>
+                <option value="Wegagen">Wegagen</option>
+                <option value="Other">Other</option>
               </select>
             </div>
+
+            {/* Optional: show consultants as comma-separated string for editing */}
+            <Input name="consultants" placeholder="Consultants (comma separated)" value={Array.isArray(form.consultants) ? form.consultants.join(", ") : form.consultants} onChange={(e) => setForm(f => ({ ...f, consultants: e.target.value.split(",").map(s => s.trim()).filter(Boolean) }))} />
 
             <div className="md:col-span-3 flex items-center gap-3">
               <div className="text-sm text-slate-700 flex items-center gap-2">

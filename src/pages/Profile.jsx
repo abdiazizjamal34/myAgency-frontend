@@ -1,20 +1,82 @@
 // src/pages/Profile.jsx
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { AgenciesAPI } from "../services/api";
 import { useAuth } from "../hooks/useAuth";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import Modal from "../components/ui/Modal";
 import { Mail, Shield, Edit3, Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../components/ui/Toast";
+import { useEffect } from "react";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, setUser, refreshUser } = useAuth(); // setUser/refreshUser optional
+  const toast = useToast();
+  const fileRef = useRef(null);
+  const [preview, setPreview] = useState(user?.agency?.logo || null);
+  const [uploading, setUploading] = useState(false);
   const [action, setAction] = useState(null);
   const [notifications, setNotifications] = useState({
     emailReports: true,
     systemAlerts: true,
     newUsers: false,
   });
+    const [logoUrl, setLogoUrl] = useState(null);
+  const navigate = useNavigate();
+
+    useEffect(() => {
+      let mounted = true;
+      let objectUrl = null;
+      async function loadLogo() {
+        try {
+          const agencyId = user?.agency?._id || user?.agency;
+          if (!agencyId) {
+            setLogoUrl(null);
+            return;
+          }
+          const blob = await AgenciesAPI.getLogo(agencyId);
+          objectUrl = URL.createObjectURL(blob);
+          if (mounted) setLogoUrl(objectUrl);
+        } catch (err) {
+          console.error("Failed to load agency logo", err);
+          if (mounted) setLogoUrl(null);
+        }
+      }
+      loadLogo();
+      return () => {
+        mounted = false;
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+      };
+    }, [user?.agency]);
+  
+
+  const chooseFile = () => fileRef.current?.click();
+
+  const handleFile = async (e) => {
+    const f = e.target.files?.[0];
+    if (!f || !user?.agency?._id) return;
+    setUploading(true);
+    try {
+      const updatedAgency = await AgenciesAPI.uploadLogo(user.agency._id, f);
+      // update preview
+      setPreview(URL.createObjectURL(f));
+      // try to update auth state in-place
+      if (typeof refreshUser === "function") {
+        await refreshUser();
+      } else if (typeof setUser === "function" && updatedAgency) {
+        setUser((prev) => ({ ...prev, agency: updatedAgency }));
+      } else {
+        window.location.reload();
+      }
+      toast.push("Logo uploaded");
+    } catch (err) {
+      console.error("Upload failed", err);
+      toast.push("Logo upload failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (!user) return <div>Loading profile...</div>;
 
@@ -30,6 +92,18 @@ export default function Profile() {
           alt={user.name}
           className="w-32 h-32 rounded-full shadow-lg"
         />
+
+         {/* {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt="Agency Logo"
+          className="w-full h-full object-contain rounded-lg "
+        />
+      ) : (
+        <span className="text-sm font-semibold text-indigo-700 dark:text-slate-200">
+          {user?.agency?.name?.[0]?.toUpperCase() || "A"}
+        </span>
+      )} */}
 
         {/* Info */}
         <div className="flex-1 space-y-2 text-center md:text-left">
@@ -64,6 +138,49 @@ export default function Profile() {
           >
             <Shield size={18} /> Change Password
           </Button>
+        </div>
+      </Card>
+
+      {/* Profile Picture / Logo Upload */}
+      <Card className="p-8">
+        <h2 className="text-xl font-semibold mb-6">Profile Picture / Logo</h2>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="w-20 h-20 rounded overflow-hidden border bg-white/5">
+            {/* {preview ? (
+              <img src={preview} alt="agency logo" className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-sm text-slate-400">No logo</div>
+            )} */}
+             {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt="Agency Logo"
+          className="w-full h-full object-contain rounded-lg "
+        />
+      ) : (
+        <span className="text-sm font-semibold text-indigo-700 dark:text-slate-200">
+          {user?.agency?.name?.[0]?.toUpperCase() || "A"}
+        </span>
+      )}
+          </div>
+
+          <div className="flex-1">
+            <div className="text-sm text-slate-700 mb-2">{user?.agency?.name || "No agency"}</div>
+
+            {user?.role === "AGENCY_ADMIN" ? (
+              <>
+                <div className="flex gap-2">
+                  <Button onClick={chooseFile} disabled={uploading}>
+                    {uploading ? "Uploading..." : "Upload logo"}
+                  </Button>
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+                </div>
+                <div className="text-xs text-slate-500 mt-2">Allowed formats: jpg, png. Max size: (enforce on server)</div>
+              </>
+            ) : (
+              <div className="text-xs text-slate-500">Contact agency admin to update logo.</div>
+            )}
+          </div>
         </div>
       </Card>
 

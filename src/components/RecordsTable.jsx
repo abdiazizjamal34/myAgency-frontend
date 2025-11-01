@@ -67,11 +67,14 @@ export default function RecordsTable({ records, onEdit, onDelete, loading }) {
                   Number(r.buyingPrice || 0) -
                   Number(r.expenses || 0);
                 const tone = comm >= 0 ? "positive" : "negative";
+                // highlight rows where paymentMethod is Loan
+                const rowClass =
+                  r.paymentMethod === "Loan"
+                    ? "bg-yellow-900 border-t dark:bg-yellow-900"
+                    : "odd:bg-white even:bg-gray-50 border-t dark:odd:bg-slate-800 dark:even:bg-slate-700";
+
                 return (
-                  <tr
-                    key={r._id}
-                    className="odd:bg-white even:bg-gray-50 border-t dark:odd:bg-slate-800 dark:even:bg-slate-700"
-                  >
+                  <tr key={r._id} className={rowClass}>
                     <td className="p-3">{r.customerName}</td>
                     <td className="p-3">{r.typeOfService}</td>
                     <td className="p-3">{currency(r.sellingPrice)}</td>
@@ -82,21 +85,13 @@ export default function RecordsTable({ records, onEdit, onDelete, loading }) {
                     </td>
                     <td className="p-3">
                       <div className="flex items-center gap-2 justify-end">
-                          {/* <Button
-  variant="outline"
-  onClick={() => navigate(`/invoice/${r._id}`)}
->
-  🧾 Invoice
-</Button> */}
-                       <Button
-  variant="outline"
-  className="px-3 py-1"
-  onClick={() => navigate(`/records/${r._id}`)}
-
->
-
-  <Eye className="w-4 h-4" />
-</Button>
+                        <Button
+                          variant="outline"
+                          className="px-3 py-1"
+                          onClick={() => navigate(`/records/${r._id}`)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
                         <Button
                           variant="outline"
                           className="px-3 py-1"

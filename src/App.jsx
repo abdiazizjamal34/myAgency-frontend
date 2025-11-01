@@ -19,6 +19,7 @@ import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound"; // create if missing
 import RecordDetails from "./pages/RecordDetails";
 import InvoicePage from "./pages/InvoicePage";
+import PaymentSummary from "./pages/PaymentSummary";
 
 function AppShell() {
   const { user } = useAuth();
@@ -56,6 +57,7 @@ function AppShell() {
                <Route path="/records/:id" element={<RecordDetails />} /> 
                <Route path="/invoice/:id" element={<InvoicePage />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/payment-summary" element={<PaymentSummary />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               {user.role === "SUPER_ADMIN" && (

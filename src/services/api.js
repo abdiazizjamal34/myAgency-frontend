@@ -58,10 +58,20 @@ export const RecordsAPI = {
 // ---- Agencies (SUPER_ADMIN)
 export const AgenciesAPI = {
   list: () => api.get("/api/agencies").then((r) => r.data || []),
+  get: (id) => api.get(`/api/agencies/${id}`).then((r) => r.data),
   create: (payload) => api.post("/api/agencies", payload).then((r) => r.data),
   update: (id, payload) => api.patch(`/api/agencies/${id}`, payload).then((r) => r.data),
   remove: (id) => api.delete(`/api/agencies/${id}`).then((r) => r.data),
   assignAdmin: (id, payload) => api.post(`/api/agencies/${id}/admin`, payload).then((r) => r.data),
+  uploadLogo: (id, file) => {
+    const fd = new FormData();
+    fd.append("logo", file);
+    return api.post(`/api/agencies/${id}/logo`, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data);
+  },
+  // fetch logo as binary blob (axios will include auth header via interceptor)
+  getLogo: (id) => api.get(`/api/agencies/${id}/logo`, { responseType: "blob" }).then((r) => r.data),
 };
 
 // ---- Users (SUPER_ADMIN + AGENCY_ADMIN)
@@ -76,32 +86,28 @@ export const UsersAPI = {
 export const ReportsAPI = {
   summary: (params = {}) =>
     api.get("/api/reports/summary", { params }).then((r) => r.data),
-
   byService: (params = {}) =>
     api.get("/api/reports/by-service", { params }).then((r) => r.data || []),
-
   trend: async (params) => {
-  try {
-    const response = await api.get("/api/reports/trend", { params });
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching trend data:", error);
-    throw error;
-  }
-}
-
+    try {
+      const response = await api.get("/api/reports/trend", { params });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching trend data:", error);
+      throw error;
+    }
+  },
+  paymentSummary: (params = {}) =>
+    api.get("/api/reports/paymentsummary", { params }).then((r) => r.data),
 };
-  
+
 // export const UserAPI = {
 //   changePassword: (_id, data) => api.post(`api/users/change-password`, data).then(r => r.data),
-  
-
 // };
 
 export const UserAPI = {
   // For self password change
   changePassword: (data) => api.post('api/users/change-password', data).then(r => r.data),
-
   // For admin changing another user's password
   changeUserPassword: (_id, data) => api.post(`api/users/${_id}/change-password`, data).then(r => r.data),
 };
@@ -113,7 +119,6 @@ export const PasswordAPI = {
   verifyOtp: (data) => api.post("/api/auth/verify-otp", data).then(r => r.data),
   changePassword: (data) => api.post("/api/auth/reset-password", data).then(r => r.data),
 };
-
 
 NProgress.configure({
   showSpinner: false,
@@ -157,8 +162,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-
-
 
 export default api;
